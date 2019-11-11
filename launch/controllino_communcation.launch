@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="rosserial_python" type="serial_node.py" name="serial_node" args="tcp"/>
+  <node pkg="controllino_control" type="controllino_ss.py" name="controllino_ss_nd"/>
+</launch>
