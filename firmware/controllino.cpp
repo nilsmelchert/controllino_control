@@ -1,14 +1,14 @@
 /*
-	Sketch title
+  Sketch title
 
-	This arduino sketch lets you communicate with the controllino module, 
-	which is based on the arduino meda 2560 via ros services.
-	In order to use more than just the default interrupt pins, the library
-	"PinChangeInterrupt" from Github was used. 
-	(see https://github.com/NicoHood/PinChangeInterrupt)
+  This arduino sketch lets you communicate with the controllino module, 
+  which is based on the arduino meda 2560 via ros services.
+  In order to use more than just the default interrupt pins, the library
+  "PinChangeInterrupt" from Github was used. 
+  (see https://github.com/NicoHood/PinChangeInterrupt)
 
-	Created 11 11 2019
-	By Nils Melchert
+  Created 11 11 2019
+  By Nils Melchert
 */
 
 #include <Controllino.h> 
@@ -31,10 +31,10 @@ ros::ServiceClient<Test::Request, Test::Response> service_client("controllino_ge
 
 // Shield settings
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-IPAddress ip(130, 75, 27, 117);
+IPAddress ip(192, 168, 0, 117);
 
 // Server settings
-IPAddress server(130, 75, 27, 242);
+IPAddress server(192, 168, 0, 85);
 uint16_t serverPort = 11411;
 
 Test::Request test_req;
@@ -303,8 +303,6 @@ void setup()
   pinMode(CONTROLLINO_D6, OUTPUT);
   pinMode(CONTROLLINO_D7, OUTPUT);  
 
-  //const byte interruptPin = 2;
-  //attachInterrupt(digitalPinToInterrupt(interruptPin), test_ISR, CHANGE);
   attachPinChangeInterrupt(digitalPinToPinChangeInterrupt(CONTROLLINO_A8), isr8, CHANGE);
   attachPinChangeInterrupt(digitalPinToPinChangeInterrupt(CONTROLLINO_A9), isr9, CHANGE);
   attachPinChangeInterrupt(digitalPinToPinChangeInterrupt(CONTROLLINO_A10), isr10, CHANGE);
@@ -333,11 +331,11 @@ void isr8()
         char cstr[16];
         uint8_t trigger = getPinChangeInterruptTrigger(digitalPinToPinChangeInterrupt(CONTROLLINO_A8));
         if(trigger == RISING)
-          test_req.input = "a81";
+          test_req.input = "a081";
         else if(trigger == FALLING)
-          test_req.input = "a80";
+          test_req.input = "a080";
         else 
-          test_req.input = "a8-1";
+          test_req.input = "-1";
         service_client.call(test_req, test_resp);
       }
       last_interrupt_time_8 = interrupt_time;
@@ -351,11 +349,11 @@ void isr9()
         char cstr[16];
         uint8_t trigger = getPinChangeInterruptTrigger(digitalPinToPinChangeInterrupt(CONTROLLINO_A9));
         if(trigger == RISING)
-          test_req.input = "a91";
+          test_req.input = "a091";
         else if(trigger == FALLING)
-          test_req.input = "a90";
+          test_req.input = "a090";
         else 
-          test_req.input = "a9-1";
+          test_req.input = "-1";
         service_client.call(test_req, test_resp);
       }
       last_interrupt_time_9 = interrupt_time;
@@ -373,7 +371,7 @@ void isr10()
         else if(trigger == FALLING)
           test_req.input = "a100";
         else 
-          test_req.input = "a10-1";
+          test_req.input = "-1";
         service_client.call(test_req, test_resp);
       }
       last_interrupt_time_10 = interrupt_time;
@@ -391,7 +389,7 @@ void isr11()
         else if(trigger == FALLING)
           test_req.input = "a110";
         else 
-          test_req.input = "a11-1";
+          test_req.input = "-1";
         service_client.call(test_req, test_resp);
       }
       last_interrupt_time_11 = interrupt_time;
@@ -409,7 +407,7 @@ void isr12()
         else if(trigger == FALLING)
           test_req.input = "a120";
         else 
-          test_req.input = "a12-1";
+          test_req.input = "-1";
         service_client.call(test_req, test_resp);
       }
       last_interrupt_time_12 = interrupt_time;
@@ -427,7 +425,7 @@ void isr13()
         else if(trigger == FALLING)
           test_req.input = "a130";
         else 
-          test_req.input = "a13-1";
+          test_req.input = "-1";
         service_client.call(test_req, test_resp);
       }
       last_interrupt_time_13 = interrupt_time;
@@ -445,7 +443,7 @@ void isr14()
         else if(trigger == FALLING)
           test_req.input = "a140";
         else 
-          test_req.input = "a14-1";
+          test_req.input = "-1";
         service_client.call(test_req, test_resp);
       }
       last_interrupt_time_14 = interrupt_time;
@@ -463,7 +461,7 @@ void isr15()
         else if(trigger == FALLING)
           test_req.input = "a150";
         else 
-          test_req.input = "a15-1";
+          test_req.input = "-1";
         service_client.call(test_req, test_resp);
       }
       last_interrupt_time_15 = interrupt_time;
