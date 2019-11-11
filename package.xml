@@ -20,7 +20,8 @@
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
   <!-- <url type="website">http://wiki.ros.org/controllino_control</url> -->
-
+  <build_depend>message_generation</build_depend>
+  <exec_depend>message_runtime</exec_depend>
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
   <!-- Authors do not have to be maintainers, but could be -->
