@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+
 import rospy
 from rosserial_arduino.srv import Test, TestResponse
 
