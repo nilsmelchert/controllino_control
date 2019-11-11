@@ -1,5 +1,17 @@
-#include <Controllino.h> /* Usage of CONTROLLINO library allows you to use CONTROLLINO_xx aliases in your sketch. */
- 
+/*
+	Sketch title
+
+	This arduino sketch lets you communicate with the controllino module, 
+	which is based on the arduino meda 2560 via ros services.
+	In order to use more than just the default interrupt pins, the library
+	"PinChangeInterrupt" from Github was used. 
+	(see https://github.com/NicoHood/PinChangeInterrupt)
+
+	Created 11 11 2019
+	By Nils Melchert
+*/
+
+#include <Controllino.h> 
 #include <SPI.h>
 #include <Ethernet.h>
 
@@ -8,11 +20,14 @@
 #include <std_srvs/Empty.h>
 #include <std_msgs/String.h>
 #include <rosserial_arduino/Test.h>
+#include <PinChangeInterrupt.h>
 
 // ROS initialization
 ros::NodeHandle  nh;
 using rosserial_arduino::Test;
 int ret_val;
+
+ros::ServiceClient<Test::Request, Test::Response> service_client("controllino_getter");
 
 // Shield settings
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -22,12 +37,13 @@ IPAddress ip(130, 75, 27, 117);
 IPAddress server(130, 75, 27, 242);
 uint16_t serverPort = 11411;
 
-const uint8_t ledPin = 7; // 13 already used for SPI connection with the shield
+Test::Request test_req;
+Test::Response test_resp;
 
-void callback(const Test::Request & req, Test::Response & res){
+void service_callback(const Test::Request & req, Test::Response & res){
   ///< ALL ON
   if (String(req.input).equals("da1"))
-  {    
+  {                
     digitalWrite(CONTROLLINO_D0, HIGH);
     digitalWrite(CONTROLLINO_D1, HIGH);
     digitalWrite(CONTROLLINO_D2, HIGH);
@@ -37,7 +53,7 @@ void callback(const Test::Request & req, Test::Response & res){
     digitalWrite(CONTROLLINO_D6, HIGH);
     digitalWrite(CONTROLLINO_D7, HIGH);
     res.output = "1";
-  }
+  }  
   ///< ALL OFF
   else if (String(req.input).equals("da0"))
   {   
@@ -51,7 +67,7 @@ void callback(const Test::Request & req, Test::Response & res){
     digitalWrite(CONTROLLINO_D7, LOW);
     res.output = "0";
   }
-  ///< LED-D0
+  ///< LED-d0
   else if (String(req.input).equals("d01"))
   {    
     digitalWrite(CONTROLLINO_D0, HIGH);  
@@ -78,7 +94,7 @@ void callback(const Test::Request & req, Test::Response & res){
       res.output = "-1";    
     }
   }
-  ///< LED-D1
+  ///< LED-d1
   else if (String(req.input).equals("d11"))
   {    
     digitalWrite(CONTROLLINO_D1, HIGH);  
@@ -105,7 +121,7 @@ void callback(const Test::Request & req, Test::Response & res){
       res.output = "-1";    
     }
   }
-  ///< LED-D2
+  ///< LED-d2
   else if (String(req.input).equals("d21"))
   {    
     digitalWrite(CONTROLLINO_D2, HIGH);  
@@ -132,7 +148,7 @@ void callback(const Test::Request & req, Test::Response & res){
       res.output = "-1";    
     }
   }
-  ///< LED-D3
+  ///< LED-d3
   else if (String(req.input).equals("d31"))
   {    
     digitalWrite(CONTROLLINO_D3, HIGH);  
@@ -159,7 +175,7 @@ void callback(const Test::Request & req, Test::Response & res){
       res.output = "-1";    
     }
   }
-  ///< LED-D4
+  ///< LED-d4
   else if (String(req.input).equals("d41"))
   {    
     digitalWrite(CONTROLLINO_D4, HIGH);  
@@ -186,7 +202,7 @@ void callback(const Test::Request & req, Test::Response & res){
       res.output = "-1";    
     }
   }
-  ///< LED-D5
+  ///< LED-d5
   else if (String(req.input).equals("d51"))
   {    
     digitalWrite(CONTROLLINO_D5, HIGH);  
@@ -213,7 +229,7 @@ void callback(const Test::Request & req, Test::Response & res){
       res.output = "-1";    
     }
   }
-  ///< LED-D6
+  ///< LED-d6
   else if (String(req.input).equals("d61"))
   {    
     digitalWrite(CONTROLLINO_D6, HIGH);  
@@ -240,7 +256,7 @@ void callback(const Test::Request & req, Test::Response & res){
       res.output = "-1";    
     }
   }
-  ///< LED-D7
+  ///< LED-d7
   else if (String(req.input).equals("d71"))
   {    
     digitalWrite(CONTROLLINO_D7, HIGH);  
@@ -273,43 +289,188 @@ void callback(const Test::Request & req, Test::Response & res){
   }
 }
 
-ros::ServiceServer<Test::Request, Test::Response> service_server("test_srv",&callback);
+ros::ServiceServer<Test::Request, Test::Response> service_server("controllino_setter",&service_callback); 
 
 void setup()
-{
-  // Define outputs
-  pinMode(CONTROLLINO_R0, OUTPUT);
-  pinMode(CONTROLLINO_D0, OUTPUT); 
+{  
+  // Define outputs    
+  pinMode(CONTROLLINO_D0, OUTPUT);
   pinMode(CONTROLLINO_D1, OUTPUT);
   pinMode(CONTROLLINO_D2, OUTPUT); 
   pinMode(CONTROLLINO_D3, OUTPUT); 
   pinMode(CONTROLLINO_D4, OUTPUT); 
-  pinMode(CONTROLLINO_D5, OUTPUT); 
+  pinMode(CONTROLLINO_D5, OUTPUT);
   pinMode(CONTROLLINO_D6, OUTPUT);
-  pinMode(CONTROLLINO_D7, OUTPUT);
+  pinMode(CONTROLLINO_D7, OUTPUT);  
 
-  // Define inputs
-  pinMode(CONTROLLINO_D8, INPUT); 
-  pinMode(CONTROLLINO_D9, INPUT);
-  pinMode(CONTROLLINO_D10, INPUT); 
-  pinMode(CONTROLLINO_D11, INPUT); 
-  pinMode(CONTROLLINO_D12, INPUT); 
-  pinMode(CONTROLLINO_D13, INPUT); 
-  pinMode(CONTROLLINO_D14, INPUT);
-  pinMode(CONTROLLINO_D15, INPUT);
-  
+  //const byte interruptPin = 2;
+  //attachInterrupt(digitalPinToInterrupt(interruptPin), test_ISR, CHANGE);
+  attachPinChangeInterrupt(digitalPinToPinChangeInterrupt(CONTROLLINO_A8), isr8, CHANGE);
+  attachPinChangeInterrupt(digitalPinToPinChangeInterrupt(CONTROLLINO_A9), isr9, CHANGE);
+  attachPinChangeInterrupt(digitalPinToPinChangeInterrupt(CONTROLLINO_A10), isr10, CHANGE);
+  attachPinChangeInterrupt(digitalPinToPinChangeInterrupt(CONTROLLINO_A11), isr11, CHANGE);
+  attachPinChangeInterrupt(digitalPinToPinChangeInterrupt(CONTROLLINO_A12), isr12, CHANGE);
+  attachPinChangeInterrupt(digitalPinToPinChangeInterrupt(CONTROLLINO_A13), isr13, CHANGE);
+  attachPinChangeInterrupt(digitalPinToPinChangeInterrupt(CONTROLLINO_A14), isr14, CHANGE);
+  attachPinChangeInterrupt(digitalPinToPinChangeInterrupt(CONTROLLINO_A15), isr15, CHANGE);
+    
   Ethernet.begin(mac, ip);
   // give the Ethernet shield a second to initialize:
-  delay(1000);
-  pinMode(ledPin, OUTPUT);
+  delay(1000);  
   nh.getHardware()->setConnection(server, serverPort);
   nh.initNode();
   nh.advertiseService(service_server);  
+  nh.serviceClient(service_client);
+  while(!nh.connected()) nh.spinOnce();
 }
+
+static unsigned long last_interrupt_time_8 = 0;
+void isr8()
+  {
+    unsigned long interrupt_time = millis();
+    if (interrupt_time - last_interrupt_time_8 > 200)
+      {
+        char cstr[16];
+        uint8_t trigger = getPinChangeInterruptTrigger(digitalPinToPinChangeInterrupt(CONTROLLINO_A8));
+        if(trigger == RISING)
+          test_req.input = "a81";
+        else if(trigger == FALLING)
+          test_req.input = "a80";
+        else 
+          test_req.input = "a8-1";
+        service_client.call(test_req, test_resp);
+      }
+      last_interrupt_time_8 = interrupt_time;
+  }
+static unsigned long last_interrupt_time_9 = 0;
+void isr9()
+  {
+    unsigned long interrupt_time = millis();
+    if (interrupt_time - last_interrupt_time_9 > 200)
+      {
+        char cstr[16];
+        uint8_t trigger = getPinChangeInterruptTrigger(digitalPinToPinChangeInterrupt(CONTROLLINO_A9));
+        if(trigger == RISING)
+          test_req.input = "a91";
+        else if(trigger == FALLING)
+          test_req.input = "a90";
+        else 
+          test_req.input = "a9-1";
+        service_client.call(test_req, test_resp);
+      }
+      last_interrupt_time_9 = interrupt_time;
+  }
+static unsigned long last_interrupt_time_10 = 0;
+void isr10()
+  {
+    unsigned long interrupt_time = millis();
+    if (interrupt_time - last_interrupt_time_10 > 200)
+      {
+        char cstr[16];
+        uint8_t trigger = getPinChangeInterruptTrigger(digitalPinToPinChangeInterrupt(CONTROLLINO_A10));
+        if(trigger == RISING)
+          test_req.input = "a101";
+        else if(trigger == FALLING)
+          test_req.input = "a100";
+        else 
+          test_req.input = "a10-1";
+        service_client.call(test_req, test_resp);
+      }
+      last_interrupt_time_10 = interrupt_time;
+  }
+static unsigned long last_interrupt_time_11 = 0;
+void isr11()
+  {
+    unsigned long interrupt_time = millis();
+    if (interrupt_time - last_interrupt_time_11 > 200)
+      {
+        char cstr[16];
+        uint8_t trigger = getPinChangeInterruptTrigger(digitalPinToPinChangeInterrupt(CONTROLLINO_A11));
+        if(trigger == RISING)
+          test_req.input = "a111";
+        else if(trigger == FALLING)
+          test_req.input = "a110";
+        else 
+          test_req.input = "a11-1";
+        service_client.call(test_req, test_resp);
+      }
+      last_interrupt_time_11 = interrupt_time;
+  }
+static unsigned long last_interrupt_time_12 = 0;
+void isr12()
+  {
+    unsigned long interrupt_time = millis();
+    if (interrupt_time - last_interrupt_time_12 > 200)
+      {
+        char cstr[16];
+        uint8_t trigger = getPinChangeInterruptTrigger(digitalPinToPinChangeInterrupt(CONTROLLINO_A12));
+        if(trigger == RISING)
+          test_req.input = "a121";
+        else if(trigger == FALLING)
+          test_req.input = "a120";
+        else 
+          test_req.input = "a12-1";
+        service_client.call(test_req, test_resp);
+      }
+      last_interrupt_time_12 = interrupt_time;
+  }
+static unsigned long last_interrupt_time_13 = 0;
+void isr13()
+  {
+    unsigned long interrupt_time = millis();
+    if (interrupt_time - last_interrupt_time_13 > 200)
+      {
+        char cstr[16];
+        uint8_t trigger = getPinChangeInterruptTrigger(digitalPinToPinChangeInterrupt(CONTROLLINO_A13));
+        if(trigger == RISING)
+          test_req.input = "a131";
+        else if(trigger == FALLING)
+          test_req.input = "a130";
+        else 
+          test_req.input = "a13-1";
+        service_client.call(test_req, test_resp);
+      }
+      last_interrupt_time_13 = interrupt_time;
+  }
+static unsigned long last_interrupt_time_14 = 0;
+void isr14()
+  {
+    unsigned long interrupt_time = millis();
+    if (interrupt_time - last_interrupt_time_14 > 200)
+      {
+        char cstr[16];
+        uint8_t trigger = getPinChangeInterruptTrigger(digitalPinToPinChangeInterrupt(CONTROLLINO_A14));
+        if(trigger == RISING)
+          test_req.input = "a141";
+        else if(trigger == FALLING)
+          test_req.input = "a140";
+        else 
+          test_req.input = "a14-1";
+        service_client.call(test_req, test_resp);
+      }
+      last_interrupt_time_14 = interrupt_time;
+  }
+static unsigned long last_interrupt_time_15 = 0;
+void isr15()
+  {
+    unsigned long interrupt_time = millis();
+    if (interrupt_time - last_interrupt_time_15 > 200)
+      {
+        char cstr[16];
+        uint8_t trigger = getPinChangeInterruptTrigger(digitalPinToPinChangeInterrupt(CONTROLLINO_A15));
+        if(trigger == RISING)
+          test_req.input = "a151";
+        else if(trigger == FALLING)
+          test_req.input = "a150";
+        else 
+          test_req.input = "a15-1";
+        service_client.call(test_req, test_resp);
+      }
+      last_interrupt_time_15 = interrupt_time;
+  }
 
 void loop()
 {
   nh.spinOnce();
   delay(1);
 }
-
