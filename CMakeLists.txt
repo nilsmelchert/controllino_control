@@ -25,10 +25,10 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
-add_service_files(
-  FILES
-  SetDigitalSignal.srv
-)
+#add_service_files(
+#  FILES
+#  SetDigitalSignal.srv
+#)
 
 generate_messages(
 	DEPENDENCIES
